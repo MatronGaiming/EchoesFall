@@ -38,19 +38,11 @@ public class GameManager : MonoBehaviour
         playerCam = GameObject.Find("CameraPos");
         progressManager = GetComponent<ProgressionManager>();
 
-        gameStart = true;
-
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (gameStart == true)
-        {
-            statePause();
-            menuActive = menuStart;
-            menuActive.SetActive(true);
-        }
 
         if (Input.GetButtonDown("Cancel"))
         {

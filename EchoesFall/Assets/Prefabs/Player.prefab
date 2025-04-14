@@ -1200,7 +1200,7 @@ GameObject:
   - component: {fileID: 3978480383892505249}
   m_Layer: 0
   m_Name: Player
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1234,6 +1234,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: be4138593ef843b418c6ae76c5053fe2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isGrounded: 0
+  isCrouched: 0
+  maxHP: 100
+  currentHP: 0
+  moveSpeed: 5
+  minSpeed: 2.5
+  maxSpeed: 7
+  speedStep: 15
+  sprintSpeed: 9
+  gravity: 40
+  jumpForce: 10
+  controller: {fileID: 0}
+  animatorCtrlr: {fileID: 0}
 --- !u!143 &1095106657607906014
 CharacterController:
   m_ObjectHideFlags: 0
@@ -1245,13 +1258,13 @@ CharacterController:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Height: 2
+  m_Height: 1
   m_Radius: 0.5
   m_SlopeLimit: 45
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Center: {x: 0, y: 0.55, z: 0}
 --- !u!95 &3978480383892505249
 Animator:
   serializedVersion: 5
@@ -1265,7 +1278,7 @@ Animator:
   m_Controller: {fileID: 9100000, guid: 83ee6e97686d2e742a2d52419f019a2f, type: 2}
   m_CullingMode: 1
   m_UpdateMode: 0
-  m_ApplyRootMotion: 1
+  m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_WarningMessage: 
