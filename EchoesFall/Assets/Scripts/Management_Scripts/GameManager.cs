@@ -16,6 +16,10 @@ public class GameManager : MonoBehaviour
     public PlayerController playerScript;
     public GameObject playerCam;
 
+    [Header("UI")]
+    public GameObject eyeVisible;
+    public GameObject eyeHidden;
+
     [Header("Managers")]
     public ProgressionManager progressManager;
 
@@ -56,7 +60,18 @@ public class GameManager : MonoBehaviour
             {
                 stateUnpause();
             }
-        }        
+        } 
+        
+        if(playerScript.isVisible == true)
+        {
+            eyeVisible.SetActive(true);
+            eyeHidden.SetActive(false);
+        }
+        else
+        {
+            eyeVisible.SetActive(false);
+            eyeHidden.SetActive(true);
+        }
     }
 
     //Paused and Unpaused States

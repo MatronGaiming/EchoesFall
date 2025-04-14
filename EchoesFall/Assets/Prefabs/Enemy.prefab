@@ -367,6 +367,7 @@ GameObject:
   - component: {fileID: 8861784793726222191}
   - component: {fileID: 8861784793726222185}
   - component: {fileID: 8861784793726222184}
+  - component: {fileID: 1062459695}
   m_Layer: 0
   m_Name: Enemy
   m_TagString: Untagged
@@ -411,10 +412,13 @@ MonoBehaviour:
   HP: 0
   walkSpeed: 0
   runSpeed: 0
+  FOV: 75
+  faceTargetSpeed: 5
+  angleToPlayer: 0
+  headPos: {fileID: 9123182733555541320}
   waypoints:
   - {fileID: 0}
   - {fileID: 0}
-  headPos: {fileID: 0}
 --- !u!95 &8861784793726222191
 Animator:
   serializedVersion: 5
@@ -472,6 +476,19 @@ CapsuleCollider:
   m_Height: 1.85
   m_Direction: 1
   m_Center: {x: 0, y: 0.9, z: 0}
+--- !u!135 &1062459695
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2832938066389237679}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 6
+  m_Center: {x: 0, y: 1, z: 0}
 --- !u!1 &2851298155409465330
 GameObject:
   m_ObjectHideFlags: 0

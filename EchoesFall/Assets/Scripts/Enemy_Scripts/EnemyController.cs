@@ -23,6 +23,7 @@ public class EnemyController : MonoBehaviour
     [SerializeField] int FOV;
     [SerializeField] int faceTargetSpeed;
     [SerializeField] float angleToPlayer;
+    [SerializeField] float searchTimer;
 
     [SerializeField] Transform headPos;
     [SerializeField] Transform[] waypoints;
@@ -35,6 +36,7 @@ public class EnemyController : MonoBehaviour
     void Start()
     {
         navAgent = GetComponent<NavMeshAgent>();
+        searchTimer = 0f;
     }
 
     // Update is called once per frame
@@ -63,7 +65,7 @@ public class EnemyController : MonoBehaviour
             {
                 FollowPlayer();
             }
-            else
+            else if(searchTimer == 0)
             {
                 if (!navAgent.pathPending && navAgent.remainingDistance < 0.5f)
                 {
@@ -71,12 +73,16 @@ public class EnemyController : MonoBehaviour
                 }
             }
         }
-        else
+        else if(searchTimer == 0)
         {
             if (!navAgent.pathPending && navAgent.remainingDistance < 0.5f)
             {
                 Patrol();
             }
+        }
+        else if(searchTimer > 0)
+        {
+            //Will implement later
         }
     }
     private void OnTriggerEnter(Collider other)
@@ -94,11 +100,14 @@ public class EnemyController : MonoBehaviour
             navAgent.stoppingDistance = 0;
         }
     }
-    
+
     //Movement Functions
+    //Code for moving from point to point.
     void Patrol()
     {
-        //Code for moving from point to point.
+        navAgent.stoppingDistance = 0;
+        navAgent.speed = 2;
+
         if (waypoints.Length == 0)
         {
             return;
@@ -109,9 +118,12 @@ public class EnemyController : MonoBehaviour
             currentWaypoint = (currentWaypoint + 1) % waypoints.Length;
         }
     }
+    //Code for following the player after spotting the player.
     void FollowPlayer()
     {
-        //Code for following the player after spotting the player.
+        navAgent.stoppingDistance = 2;
+        navAgent.speed = 3.5f;
+
         navAgent.SetDestination(GameManager.instance.player.transform.position);
         faceTarget();
     }

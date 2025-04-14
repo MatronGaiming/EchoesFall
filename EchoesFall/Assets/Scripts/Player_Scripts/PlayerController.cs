@@ -10,6 +10,7 @@ public class PlayerController : MonoBehaviour
     [Header("Grounded Bools")]
     public bool isGrounded;
     public bool isCrouched;
+    public bool isVisible;
 
     [Header("---- Player Stats ----")]
     [Header("Health")]
