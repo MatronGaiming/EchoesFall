@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerController : MonoBehaviour
+public class PlayerController : MonoBehaviour, iDamageable
 {
     GameManager gm;
 
@@ -11,6 +11,7 @@ public class PlayerController : MonoBehaviour
     public bool isGrounded;
     public bool isCrouched;
     public bool isVisible;
+    public bool inHiddenObject;
 
     [Header("---- Player Stats ----")]
     [Header("Health")]
@@ -32,13 +33,14 @@ public class PlayerController : MonoBehaviour
 
     [Header("---- Components ----")]
     [SerializeField] CharacterController controller;
-    [SerializeField] Animator animatorCtrlr;
+    [SerializeField] Animator animCtrlr;
+    [SerializeField] GameObject shortSword;
 
     // Start is called before the first frame update
     void Start()
     {
         controller = GetComponent<CharacterController>();
-        animatorCtrlr = GetComponent<Animator>();
+        animCtrlr = GetComponent<Animator>();
 
         currentHP = maxHP;
     }
@@ -47,6 +49,8 @@ public class PlayerController : MonoBehaviour
     void Update()
     {
         Movement();
+        Combat();
+        AnimationStates();
     }
 
     //Movement Functions
@@ -85,6 +89,11 @@ public class PlayerController : MonoBehaviour
             Quaternion rot = Quaternion.LookRotation(movement, Vector3.up);
             transform.rotation = rot;
         }
+        //Toggle Crouching
+        if (Input.GetKeyDown(KeyCode.C))
+        {
+            isCrouched = !isCrouched;
+        }
 
         if (Input.GetButton("Jump"))
         {
@@ -97,7 +106,45 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    void AnimationStates()
+    {
+        animCtrlr.SetBool("isCrouched", isCrouched);
+    }
+
     // Combat Functions
+    void Combat()
+    {
+        if (Input.GetButtonDown("Fire1"))
+        {
+            isCrouched = false;
+            int randomAnim = Random.Range(1, 3);
+            animCtrlr.SetBool("shortSword1", randomAnim == 1);
+            animCtrlr.SetBool("shortSword2", randomAnim == 2);
+
+            if(randomAnim == 1 ||  randomAnim == 2)
+            {
+                StartCoroutine(BladeAnimationState(randomAnim));
+            }
+        }
+    }
 
     // Health and Damage Tracking
+    public void TakeDamage(float damageAmount)
+    {
+        currentHP -= damageAmount;
+
+        if (currentHP <= 0)
+        {
+            gm.YouLose();
+        }
+    }
+
+    //IEnumerators
+    IEnumerator BladeAnimationState(int index)
+    {
+        yield return new WaitForSeconds(animCtrlr.GetCurrentAnimatorStateInfo(0).length / 2);
+
+        animCtrlr.SetBool("shortSword1", index == 1 && false);
+        animCtrlr.SetBool("shortSword2", index == 2 && false);
+    }
 }
