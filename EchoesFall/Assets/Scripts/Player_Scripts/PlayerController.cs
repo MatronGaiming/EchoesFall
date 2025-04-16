@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour, iDamageable
@@ -12,6 +13,8 @@ public class PlayerController : MonoBehaviour, iDamageable
     public bool isCrouched;
     public bool isVisible;
     public bool inHiddenObject;
+    public bool isSeen;
+    public bool isAttacking;
 
     [Header("---- Player Stats ----")]
     [Header("Health")]
@@ -34,7 +37,10 @@ public class PlayerController : MonoBehaviour, iDamageable
     [Header("---- Components ----")]
     [SerializeField] CharacterController controller;
     [SerializeField] Animator animCtrlr;
-    [SerializeField] GameObject shortSword;
+    [SerializeField] GameObject shortSwordTrigger;
+    [SerializeField] GameObject daggerTrigger;
+    [SerializeField] GameObject shortSwordModel;
+    [SerializeField] GameObject daggerModel;
 
     // Start is called before the first frame update
     void Start()
@@ -114,9 +120,14 @@ public class PlayerController : MonoBehaviour, iDamageable
     // Combat Functions
     void Combat()
     {
-        if (Input.GetButtonDown("Fire1"))
+        if (Input.GetButtonDown("Fire1") && isAttacking == false)
         {
+            shortSwordModel.SetActive(true);
+            daggerModel.SetActive(false);
+
             isCrouched = false;
+            isAttacking = true;
+            
             int randomAnim = Random.Range(1, 3);
             animCtrlr.SetBool("shortSword1", randomAnim == 1);
             animCtrlr.SetBool("shortSword2", randomAnim == 2);
@@ -125,6 +136,18 @@ public class PlayerController : MonoBehaviour, iDamageable
             {
                 StartCoroutine(BladeAnimationState(randomAnim));
             }
+        }
+
+        if(Input.GetKeyDown(KeyCode.F) && isAttacking == false)
+        {
+            daggerModel.SetActive(true);
+            shortSwordModel.SetActive(false);
+
+            isAttacking = true;
+
+            animCtrlr.SetBool("assassin1", true);
+
+            StartCoroutine(AssassinAnimationState());
         }
     }
 
@@ -139,12 +162,30 @@ public class PlayerController : MonoBehaviour, iDamageable
         }
     }
 
+    //Detection
+    void Detection()
+    {
+
+    }
+
     //IEnumerators
     IEnumerator BladeAnimationState(int index)
     {
-        yield return new WaitForSeconds(animCtrlr.GetCurrentAnimatorStateInfo(0).length / 2);
+        shortSwordTrigger.GetComponent<ShortSwordBase>().EnableCollider();
+        yield return new WaitForSeconds(animCtrlr.GetCurrentAnimatorClipInfo(0).Length);
+        shortSwordTrigger.GetComponent<ShortSwordBase>().DisableCollider();
 
         animCtrlr.SetBool("shortSword1", index == 1 && false);
         animCtrlr.SetBool("shortSword2", index == 2 && false);
+        isAttacking = false;
+    }
+    IEnumerator AssassinAnimationState()
+    {
+        daggerTrigger.GetComponent<DaggerBase>().EnableCollider();
+        yield return new WaitForSeconds(animCtrlr.GetCurrentAnimatorClipInfo(0).Length);
+        daggerTrigger.GetComponent<DaggerBase>().DisableCollider();
+
+        animCtrlr.SetBool("assassin1", false);
+        isAttacking = false;
     }
 }

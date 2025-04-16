@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
-public class EnemyController : MonoBehaviour
+public class EnemyController : MonoBehaviour, iDamageable
 {
     [Header("---- Bools ----")]
     public bool playerInRange;
@@ -15,14 +15,14 @@ public class EnemyController : MonoBehaviour
     [SerializeField] Animator anim;
 
     [Header("----- Stats -----")]
-    [SerializeField] float HP;
+    [SerializeField] public float HP;
     [SerializeField] float walkSpeed;
     [SerializeField] float runSpeed;
 
     [Header("---- Movement Components ----")]
     [SerializeField] int FOV;
     [SerializeField] int faceTargetSpeed;
-    [SerializeField] float angleToPlayer;
+    [SerializeField] public float angleToPlayer;
     [SerializeField] float searchTimer;
 
     [SerializeField] Transform headPos;
@@ -142,4 +142,13 @@ public class EnemyController : MonoBehaviour
     //Attack Functions
 
     //Stat Tracking
+    public void TakeDamage(float damageAmount)
+    {
+        HP -= damageAmount;
+
+        if(HP <= 0)
+        {
+            Destroy(gameObject);
+        }
+    }
 }
