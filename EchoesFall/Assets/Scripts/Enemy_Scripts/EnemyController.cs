@@ -15,9 +15,16 @@ public class EnemyController : MonoBehaviour, iDamageable
     [SerializeField] Animator anim;
 
     [Header("----- Stats -----")]
+    [Header("Health Stats")]
     [SerializeField] public float HP;
-    [SerializeField] float walkSpeed;
-    [SerializeField] float runSpeed;
+
+    [Header("Attack Stats")]
+    [SerializeField] float attackRange;
+    [SerializeField] float attackCooldown;
+    [SerializeField] float distanceToPlayer;
+    [SerializeField] GameObject weaponTrigger;
+
+    float lastAttackTime;
 
     [Header("---- Movement Components ----")]
     [SerializeField] int FOV;
@@ -36,6 +43,7 @@ public class EnemyController : MonoBehaviour, iDamageable
     void Start()
     {
         navAgent = GetComponent<NavMeshAgent>();
+        //anim.GetComponent<Animator>();
         searchTimer = 0f;
     }
 
@@ -64,6 +72,12 @@ public class EnemyController : MonoBehaviour, iDamageable
             if (canSeePlayer)
             {
                 FollowPlayer();
+                distanceToPlayer = Vector3.Distance(transform.position, GameManager.instance.player.transform.position);
+
+                if(distanceToPlayer <= attackRange)
+                {
+                    StartCoroutine(EnemyAttackState());
+                }
             }
             else if(searchTimer == 0)
             {
@@ -140,6 +154,17 @@ public class EnemyController : MonoBehaviour, iDamageable
     //Coroutine for a timer to stop SearchingForPlayer and return to Patrol
 
     //Attack Functions
+    IEnumerator EnemyAttackState()
+    {
+        //lastAttackTime = Time.time;
+        anim.SetBool("Attack1", true);
+
+        weaponTrigger.GetComponent<EnemySwordBase>().EnableCollider();
+        yield return new WaitForSeconds(anim.GetCurrentAnimatorClipInfo(0).Length);
+        weaponTrigger.GetComponent<EnemySwordBase>().DisableCollider();
+
+        anim.SetBool("Attack1", false);
+    }
 
     //Stat Tracking
     public void TakeDamage(float damageAmount)

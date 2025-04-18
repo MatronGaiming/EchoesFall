@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
 
-public class PlayerController : MonoBehaviour, iDamageable
+public class PlayerController : MonoBehaviour
 {
     GameManager gm;
 
@@ -45,6 +45,7 @@ public class PlayerController : MonoBehaviour, iDamageable
     // Start is called before the first frame update
     void Start()
     {
+        gm = GameManager.instance;
         controller = GetComponent<CharacterController>();
         animCtrlr = GetComponent<Animator>();
 
@@ -57,6 +58,11 @@ public class PlayerController : MonoBehaviour, iDamageable
         Movement();
         Combat();
         AnimationStates();
+
+        if (currentHP <= 0)
+        {
+            gm.YouLose();
+        }
     }
 
     //Movement Functions
@@ -99,6 +105,16 @@ public class PlayerController : MonoBehaviour, iDamageable
         if (Input.GetKeyDown(KeyCode.C))
         {
             isCrouched = !isCrouched;
+        }
+        if (isCrouched)
+        {
+            controller.height = 1.0f;
+            controller.center = new Vector3(0, 0.55f, 0);
+        }
+        else
+        {
+            controller.height = 1.75f;
+            controller.center = new Vector3(0, 0.9f, 0);
         }
 
         if (Input.GetButton("Jump"))
@@ -155,11 +171,6 @@ public class PlayerController : MonoBehaviour, iDamageable
     public void TakeDamage(float damageAmount)
     {
         currentHP -= damageAmount;
-
-        if (currentHP <= 0)
-        {
-            gm.YouLose();
-        }
     }
 
     //Detection

@@ -30,6 +30,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] public GameObject menuActive;
     [SerializeField] public GameObject menuPause;
     [SerializeField] public GameObject menuWin;
+    [SerializeField] public GameObject menuLose;
     [SerializeField] public GameObject menuStart;
 
     // Start is called before the first frame update
@@ -101,6 +102,11 @@ public class GameManager : MonoBehaviour
     }
     public void YouLose()
     {
-        
+        statePause();
+        menuActive = menuLose;
+        menuActive.SetActive(true);
     }
+
+    //Visibility
+
 }
