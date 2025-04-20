@@ -7,14 +7,20 @@ public class GameManager : MonoBehaviour
     public static GameManager instance;
 
     [Header("---- Bools ----")]
+    [Header("Game States")]
     public bool isPaused;
     public bool gameStart;
+
+    [Header("Game Progression")]
+    public bool isLeaderKilled;
 
     [Header("---- Assets ----")]
     [Header("Player")]
     public GameObject player;
     public PlayerController playerScript;
     public GameObject playerCam;
+    public GameObject enemyLeader;
+    public GameObject[] enemies;
 
     [Header("UI")]
     public GameObject eyeVisible;
@@ -61,18 +67,10 @@ public class GameManager : MonoBehaviour
             {
                 stateUnpause();
             }
-        } 
-        
-        if(playerScript.isVisible == true)
-        {
-            eyeVisible.SetActive(true);
-            eyeHidden.SetActive(false);
         }
-        else
-        {
-            eyeVisible.SetActive(false);
-            eyeHidden.SetActive(true);
-        }
+
+        PlayerVisibility();
+        GameProgression();
     }
 
     //Paused and Unpaused States
@@ -108,5 +106,39 @@ public class GameManager : MonoBehaviour
     }
 
     //Visibility
+    void PlayerVisibility()
+    {
+        enemies = GameObject.FindGameObjectsWithTag("Enemy");
+        bool anyEnemyCanSeePlayer = false;
 
+        foreach (GameObject enemy in enemies)
+        {
+            EnemyController enemyController = enemy.GetComponent<EnemyController>();
+            if(enemyController != null && enemyController.canSeePlayer)
+            {
+                anyEnemyCanSeePlayer = true;
+                break;
+            }
+        }
+
+        if (playerScript.inHiddenObject == true && playerScript.isCrouched == true && anyEnemyCanSeePlayer == false)
+        {
+            eyeHidden.SetActive(true);
+            eyeVisible.SetActive(false);
+        }
+        else
+        {
+            eyeHidden.SetActive(false);
+            eyeVisible.SetActive(true);
+        }
+    }
+
+    //Progression
+    void GameProgression()
+    {
+        if(enemyLeader == null)
+        {
+            isLeaderKilled = true;
+        }
+    }
 }

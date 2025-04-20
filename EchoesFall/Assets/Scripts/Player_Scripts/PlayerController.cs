@@ -173,12 +173,6 @@ public class PlayerController : MonoBehaviour
         currentHP -= damageAmount;
     }
 
-    //Detection
-    void Detection()
-    {
-
-    }
-
     //IEnumerators
     IEnumerator BladeAnimationState(int index)
     {

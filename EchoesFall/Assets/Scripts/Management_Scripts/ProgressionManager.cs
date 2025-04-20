@@ -5,7 +5,8 @@ using UnityEngine;
 public class ProgressionManager : MonoBehaviour
 {
     GameManager gm;
-    //[Header("---- Bools ----")]
+    [Header("---- Bools ----")]
+    public bool isLeaderKilled;
     
     // Start is called before the first frame update
     void Start()
