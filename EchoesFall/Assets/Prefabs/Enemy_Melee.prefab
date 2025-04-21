@@ -854,21 +854,20 @@ MonoBehaviour:
   playerInRange: 0
   canSeePlayer: 0
   isSearching: 0
+  beingAssassinated: 0
   navAgent: {fileID: 0}
-  anim: {fileID: 0}
+  anim: {fileID: 5070675854529958441}
   HP: 100
-  attackRange: 0
+  attackRange: 2
   attackCooldown: 0
   distanceToPlayer: 0
-  weaponTrigger: {fileID: 0}
+  weaponTrigger: {fileID: 9154183241884369978}
   FOV: 75
   faceTargetSpeed: 5
   angleToPlayer: 0
   searchTimer: 0
   headPos: {fileID: 558708872065755135}
-  waypoints:
-  - {fileID: 0}
-  - {fileID: 0}
+  waypoints: []
 --- !u!95 &5070675854529958441
 Animator:
   serializedVersion: 5
@@ -2024,8 +2023,8 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 9154183241884369978}
-  m_LocalRotation: {x: 4.5702103e-10, y: -0.000000033901355, z: 0.00000004470323, w: 1}
-  m_LocalPosition: {x: 0.12900735, y: 0.1197639, z: 0.0013480257}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2058,7 +2057,7 @@ BoxCollider:
   m_Enabled: 0
   serializedVersion: 2
   m_Size: {x: 0.006, y: 0.0005, z: 0.0005}
-  m_Center: {x: -0.0035, y: 0.0006, z: 0}
+  m_Center: {x: -0.0035, y: 0, z: 0}
 --- !u!54 &7715938461780023120
 Rigidbody:
   m_ObjectHideFlags: 0

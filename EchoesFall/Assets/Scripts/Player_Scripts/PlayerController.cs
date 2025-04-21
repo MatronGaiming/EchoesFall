@@ -15,11 +15,13 @@ public class PlayerController : MonoBehaviour
     public bool inHiddenObject;
     public bool isSeen;
     public bool isAttacking;
+    public bool isGearCollected;
 
     [Header("---- Player Stats ----")]
     [Header("Health")]
     [SerializeField] public float maxHP = 100;
     [SerializeField] float currentHP;
+    [SerializeField] public int potionCount;
 
     [Header("---- Movement ----")]
     [SerializeField] float moveSpeed;
@@ -56,7 +58,10 @@ public class PlayerController : MonoBehaviour
     void Update()
     {
         Movement();
-        Combat();
+        if(isGearCollected == true)
+        {
+            Combat();
+        }
         AnimationStates();
 
         if (currentHP <= 0)
@@ -136,6 +141,7 @@ public class PlayerController : MonoBehaviour
     // Combat Functions
     void Combat()
     {
+        GameObject targetEnemy;
         if (Input.GetButtonDown("Fire1") && isAttacking == false)
         {
             shortSwordModel.SetActive(true);
@@ -156,14 +162,26 @@ public class PlayerController : MonoBehaviour
 
         if(Input.GetKeyDown(KeyCode.F) && isAttacking == false)
         {
-            daggerModel.SetActive(true);
-            shortSwordModel.SetActive(false);
+            Ray ray = new Ray(transform.position, transform.forward);
+            RaycastHit hit;
 
-            isAttacking = true;
+            if (Physics.Raycast(ray, out hit, 2.0f))
+            {
+                EnemyController enemyController = hit.collider.GetComponent<EnemyController>();
+                if (enemyController != null && !enemyController.canSeePlayer)
+                {
+                    targetEnemy = hit.collider.gameObject;
 
-            animCtrlr.SetBool("assassin1", true);
+                    daggerModel.SetActive(true);
+                    shortSwordModel.SetActive(false);
 
-            StartCoroutine(AssassinAnimationState());
+                    isAttacking = true;
+
+                    animCtrlr.SetBool("assassin1", true);
+
+                    StartCoroutine(AssassinAnimationState(targetEnemy));
+                }
+            }
         }
     }
 
@@ -171,6 +189,21 @@ public class PlayerController : MonoBehaviour
     public void TakeDamage(float damageAmount)
     {
         currentHP -= damageAmount;
+    }
+    void Healing()
+    {
+        if(potionCount > 0)
+        {
+            if (Input.GetKeyDown(KeyCode.Alpha1))
+            {
+                potionCount -= 1;
+                currentHP = maxHP;
+            }
+        }
+        else
+        {
+            
+        }
     }
 
     //IEnumerators
@@ -184,11 +217,14 @@ public class PlayerController : MonoBehaviour
         animCtrlr.SetBool("shortSword2", index == 2 && false);
         isAttacking = false;
     }
-    IEnumerator AssassinAnimationState()
+    IEnumerator AssassinAnimationState(GameObject enemy)
     {
+        enemy.GetComponent<EnemyController>().beingAssassinated = true;
         daggerTrigger.GetComponent<DaggerBase>().EnableCollider();
         yield return new WaitForSeconds(animCtrlr.GetCurrentAnimatorClipInfo(0).Length);
         daggerTrigger.GetComponent<DaggerBase>().DisableCollider();
+        enemy.GetComponent<EnemyController>().beingAssassinated = false;
+
 
         animCtrlr.SetBool("assassin1", false);
         isAttacking = false;

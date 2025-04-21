@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
@@ -25,6 +27,10 @@ public class GameManager : MonoBehaviour
     [Header("UI")]
     public GameObject eyeVisible;
     public GameObject eyeHidden;
+    public GameObject dialogueFrame;
+    public TMP_Text dialogueText;
+    public TMP_Text miscTitle;
+    public TMP_Text miscText;
 
     [Header("Managers")]
     public ProgressionManager progressManager;
@@ -38,6 +44,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] public GameObject menuWin;
     [SerializeField] public GameObject menuLose;
     [SerializeField] public GameObject menuStart;
+    [SerializeField] public GameObject menuMisc;
 
     // Start is called before the first frame update
     void Awake()
@@ -48,6 +55,15 @@ public class GameManager : MonoBehaviour
         playerScript = player.GetComponent<PlayerController>();
         playerCam = GameObject.Find("CameraPos");
         progressManager = GetComponent<ProgressionManager>();
+
+        statePause();
+        menuActive = menuMisc;
+        miscTitle.text = "Game Start";
+        miscText.text = "You've recently been captured on a mission gone wrong. Luckily you've unlocked your cell and can escape to finish your job. Collect your gear and assassinate your target!\n"
+            +"\n" 
+            + "Controls: WSAD to move around. C will allow you to crouch. Moving the scrollwheel will increase/decrease your move speed";
+        menuActive.SetActive(true);
+
 
     }
 
@@ -140,5 +156,15 @@ public class GameManager : MonoBehaviour
         {
             isLeaderKilled = true;
         }
+    }
+
+    //Player Dialogue
+    public IEnumerator playerDialogue(string text)
+    {
+        dialogueFrame.SetActive(true);
+        dialogueText.text = text;
+        yield return new WaitForSeconds(1.5f);
+        dialogueFrame.SetActive(false);
+        dialogueText.text = "-----";
     }
 }

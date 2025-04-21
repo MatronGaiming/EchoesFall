@@ -9,6 +9,7 @@ public class EnemyController : MonoBehaviour, iDamageable
     public bool playerInRange;
     public bool canSeePlayer;
     public bool isSearching;
+    public bool beingAssassinated;
 
     [Header("---- Components ----")]
     [SerializeField] NavMeshAgent navAgent;
@@ -50,53 +51,63 @@ public class EnemyController : MonoBehaviour, iDamageable
     // Update is called once per frame
     void Update()
     {
-        if (playerInRange)
+        if (beingAssassinated == false)
         {
-            playerDir = (GameManager.instance.player.transform.position + Vector3.up * .5f) - headPos.position;
-            angleToPlayer = Vector3.Angle(playerDir, transform.forward);
-
-            Debug.DrawRay(headPos.position, playerDir, Color.yellow);
-
-            RaycastHit hit;
-            if(Physics.Raycast(headPos.position, playerDir, out hit))
+            if (playerInRange)
             {
-                if(hit.collider.CompareTag("Player") && angleToPlayer <= FOV)
+                playerDir = (GameManager.instance.player.transform.position + Vector3.up * .5f) - headPos.position;
+                angleToPlayer = Vector3.Angle(playerDir, transform.forward);
+
+                Debug.DrawRay(headPos.position, playerDir, Color.yellow);
+
+                RaycastHit hit;
+                if (Physics.Raycast(headPos.position, playerDir, out hit))
                 {
-                    canSeePlayer = true;
+                    if (hit.collider.CompareTag("Player") && angleToPlayer <= FOV)
+                    {
+                        canSeePlayer = true;
+                    }
+                    else
+                    {
+                        canSeePlayer = false;
+                    }
                 }
-                else
+                if (canSeePlayer)
                 {
-                    canSeePlayer = false;
+                    FollowPlayer();
+                    distanceToPlayer = Vector3.Distance(transform.position, GameManager.instance.player.transform.position);
+
+                    if (distanceToPlayer <= attackRange)
+                    {
+                        StartCoroutine(EnemyAttackState());
+                    }
+                }
+                else if (searchTimer == 0)
+                {
+                    if (!navAgent.pathPending && navAgent.remainingDistance < 0.5f)
+                    {
+                        Patrol();
+                    }
                 }
             }
-            if (canSeePlayer)
-            {
-                FollowPlayer();
-                distanceToPlayer = Vector3.Distance(transform.position, GameManager.instance.player.transform.position);
-
-                if(distanceToPlayer <= attackRange)
-                {
-                    StartCoroutine(EnemyAttackState());
-                }
-            }
-            else if(searchTimer == 0)
+            else if (searchTimer == 0)
             {
                 if (!navAgent.pathPending && navAgent.remainingDistance < 0.5f)
                 {
                     Patrol();
                 }
             }
-        }
-        else if(searchTimer == 0)
-        {
-            if (!navAgent.pathPending && navAgent.remainingDistance < 0.5f)
+            else if (searchTimer > 0)
             {
-                Patrol();
+                //Will implement later
             }
         }
-        else if(searchTimer > 0)
+        else
         {
-            //Will implement later
+            transform.rotation = GameManager.instance.player.transform.rotation;
+
+            Vector3 offset = GameManager.instance.player.transform.forward * 1.5f;
+            transform.position = GameManager.instance.player.transform.position + offset;
         }
     }
     private void OnTriggerEnter(Collider other)
@@ -122,7 +133,7 @@ public class EnemyController : MonoBehaviour, iDamageable
         navAgent.stoppingDistance = 0;
         navAgent.speed = 2;
 
-        if (waypoints.Length == 0)
+        if (waypoints.Length == 0 || waypoints == null)
         {
             return;
         }
