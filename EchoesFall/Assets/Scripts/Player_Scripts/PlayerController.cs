@@ -11,14 +11,17 @@ public class PlayerController : MonoBehaviour
     [Header("Grounded Bools")]
     public bool isGrounded;
     public bool isCrouched;
-    public bool isJumping;
-    public bool isWallRunning;
+    [Header("Visibility")]
     public bool isVisible;
     public bool inHiddenObject;
     public bool isSeen;
+    [Header("Player States")]
     public bool isAttacking;
     public bool isGearCollected;
     public bool isPlayerLocked;
+    [Header("Wall Running")]
+    public bool isWallRunning;
+    public bool isNearWall;
 
     [Header("---- Player Stats ----")]
     [Header("Health")]
@@ -43,6 +46,10 @@ public class PlayerController : MonoBehaviour
     [SerializeField] float gravity;
     [SerializeField] float jumpForce;
     private Vector3 velocity;
+
+    [Header("---- Wall Running/Ledge Grabbing -----")]
+    [SerializeField] float wallRunDuration;
+    [SerializeField] float wallRunSpeed;
 
     [Header("---- Components ----")]
     [SerializeField] CharacterController controller;
@@ -140,7 +147,55 @@ public class PlayerController : MonoBehaviour
         {
             controller.height = 1.75f;
             controller.center = new Vector3(0, 0.9f, 0);
-        }       
+        }
+
+        //Wall Running
+        RaycastHit wallHit;
+        Debug.DrawRay(transform.position + Vector3.up * 1f, transform.forward, Color.yellow);
+
+        if (Physics.Raycast(transform.position + Vector3.up * 1f, transform.forward, out wallHit, 1.5f))
+        {
+            if(wallHit.collider.CompareTag("Wall"))
+            {
+                isNearWall = true;
+            }    
+        }
+        else
+        {
+            isNearWall = false;
+        }
+        if(Input.GetKeyDown(KeyCode.Space) && isNearWall)
+        {
+            StartCoroutine(WallRunCoroutine());
+        }
+
+        //Ledge Detection
+        if (isWallRunning)
+        {
+            RaycastHit ledgeHit;
+            Vector3 rayOrigin = transform.position + Vector3.up * 1.5f;
+
+            if(Physics.Raycast(rayOrigin, transform.forward, out ledgeHit, 1.0f))
+            {
+                if (ledgeHit.collider.CompareTag("Ledge"))
+                {
+
+                    LedgeGrabe(ledgeHit.point);
+                }
+            }
+        }
+        
+    }
+    void WallRunMovement()
+    {
+        Vector3 wallRunDirection = new Vector3(movement.x, 1, movement.y);
+        controller.Move(wallRunDirection * wallRunSpeed * Time.deltaTime);
+    }
+    void LedgeGrabe(Vector3 ledgePoint)
+    {
+        isWallRunning = false;
+
+        transform.position = ledgePoint;
     }
 
     void AnimationStates()
@@ -239,5 +294,19 @@ public class PlayerController : MonoBehaviour
 
         animCtrlr.SetBool("assassin1", false);
         isAttacking = false;
+    }
+    IEnumerator WallRunCoroutine()
+    {
+        isWallRunning = true;
+
+        float elapsedTime = 0f;
+
+        while(elapsedTime < wallRunDuration)
+        {
+            WallRunMovement();
+            elapsedTime += Time.deltaTime;
+            yield return null;
+        }
+        isWallRunning = false;
     }
 }
