@@ -2,19 +2,21 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ExitFromDungeon : MonoBehaviour
+public class MainExit : MonoBehaviour
 {
+    public GameObject enemy;
+
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Player"))
         {
-            if(GameManager.instance.playerScript.isGearCollected == false)
+            if(enemy == null)
             {
-                StartCoroutine(GameManager.instance.playerDialogue("'I need to collect my gear first!'"));
+                GameManager.instance.YouWin();
             }
             else
             {
-                Destroy(gameObject);
+                StartCoroutine(GameManager.instance.playerDialogue("I need to kill my target first."));
             }
         }
     }

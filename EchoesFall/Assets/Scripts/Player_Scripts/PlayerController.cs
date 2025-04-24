@@ -11,11 +11,14 @@ public class PlayerController : MonoBehaviour
     [Header("Grounded Bools")]
     public bool isGrounded;
     public bool isCrouched;
+    public bool isJumping;
+    public bool isWallRunning;
     public bool isVisible;
     public bool inHiddenObject;
     public bool isSeen;
     public bool isAttacking;
     public bool isGearCollected;
+    public bool isPlayerLocked;
 
     [Header("---- Player Stats ----")]
     [Header("Health")]
@@ -28,8 +31,13 @@ public class PlayerController : MonoBehaviour
     [SerializeField] float minSpeed;
     [SerializeField] float maxSpeed;
     [SerializeField] float speedStep;
-    [SerializeField] float sprintSpeed;
+    [SerializeField] float jumpSpeed;
     private Vector3 movement;
+
+    [Header("---- Ground Check ----")]
+    [SerializeField] Transform groundCheck;
+    [SerializeField] float groundDistance = 0.2f;
+    [SerializeField] LayerMask groundMask;
 
     [Header("---- Jumping/Physics ----")]
     [SerializeField] float gravity;
@@ -57,12 +65,16 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Movement();
-        if(isGearCollected == true)
+        if(isPlayerLocked == false)
         {
-            Combat();
+            Movement();
+            if (isGearCollected == true)
+            {
+                Combat();
+            }
+            AnimationStates();
+            Healing();
         }
-        AnimationStates();
 
         if (currentHP <= 0)
         {
@@ -73,6 +85,9 @@ public class PlayerController : MonoBehaviour
     //Movement Functions
     private void Movement()
     {
+        //Detect Ground
+        isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
+
         if (!isGrounded)
         {
             controller.Move(velocity * Time.deltaTime);
@@ -82,7 +97,7 @@ public class PlayerController : MonoBehaviour
         {
             velocity.y = -2f;
         }
-        isGrounded = controller.isGrounded;
+        //isGrounded = controller.isGrounded;
 
         //Move Input
         float mouseScroll = Input.GetAxis("Mouse ScrollWheel");
@@ -98,7 +113,11 @@ public class PlayerController : MonoBehaviour
             moveSpeed = Mathf.Clamp(moveSpeed, minSpeed, maxSpeed);
         }
 
-        Vector3 move = new Vector3(movement.x, 0, movement.z);
+        if (isGrounded)
+        {
+            Vector3 move = new Vector3(movement.x, 0, movement.z);
+            controller.Move(move * moveSpeed * Time.deltaTime);
+        }
 
         // Rotate to face direction of movement
         if (movement != Vector3.zero)
@@ -106,6 +125,7 @@ public class PlayerController : MonoBehaviour
             Quaternion rot = Quaternion.LookRotation(movement, Vector3.up);
             transform.rotation = rot;
         }
+
         //Toggle Crouching
         if (Input.GetKeyDown(KeyCode.C))
         {
@@ -120,17 +140,7 @@ public class PlayerController : MonoBehaviour
         {
             controller.height = 1.75f;
             controller.center = new Vector3(0, 0.9f, 0);
-        }
-
-        if (Input.GetButton("Jump"))
-        {
-            isCrouched = false;
-            controller.Move(move * sprintSpeed * Time.deltaTime);
-        }
-        else
-        {
-            controller.Move(move * moveSpeed * Time.deltaTime);
-        }
+        }       
     }
 
     void AnimationStates()
@@ -192,17 +202,18 @@ public class PlayerController : MonoBehaviour
     }
     void Healing()
     {
-        if(potionCount > 0)
+        if (Input.GetKeyDown(KeyCode.Alpha1))
         {
-            if (Input.GetKeyDown(KeyCode.Alpha1))
+            if(potionCount > 0 && currentHP < maxHP)
             {
                 potionCount -= 1;
+                GameManager.instance.potionText.text = potionCount.ToString();
                 currentHP = maxHP;
             }
-        }
-        else
-        {
-            
+            else if(potionCount == 0)
+            {
+                StartCoroutine(gm.playerDialogue("I need to find some pointions"));
+            }
         }
     }
 

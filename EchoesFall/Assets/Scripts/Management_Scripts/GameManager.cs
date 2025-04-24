@@ -31,6 +31,7 @@ public class GameManager : MonoBehaviour
     public TMP_Text dialogueText;
     public TMP_Text miscTitle;
     public TMP_Text miscText;
+    public TMP_Text potionText;
 
     [Header("Managers")]
     public ProgressionManager progressManager;
