@@ -19,9 +19,10 @@ public class PlayerController : MonoBehaviour
     public bool isAttacking;
     public bool isGearCollected;
     public bool isPlayerLocked;
-    [Header("Wall Running")]
+    [Header("Wall Physics")]
     public bool isWallRunning;
     public bool isNearWall;
+    public bool isClimbing;
 
     [Header("---- Player Stats ----")]
     [Header("Health")]
@@ -47,9 +48,12 @@ public class PlayerController : MonoBehaviour
     [SerializeField] float jumpForce;
     private Vector3 velocity;
 
-    [Header("---- Wall Running/Ledge Grabbing -----")]
+    [Header("---- Wall Running/Climbing -----")]
+    [SerializeField] float wallRunTimer;
     [SerializeField] float wallRunDuration;
     [SerializeField] float wallRunSpeed;
+    private Bounds climbingBounds;
+    private Vector3 ledgePos;
 
     [Header("---- Components ----")]
     [SerializeField] CharacterController controller;
@@ -95,7 +99,7 @@ public class PlayerController : MonoBehaviour
         //Detect Ground
         isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
 
-        if (!isGrounded)
+        if (isGrounded == false || isWallRunning == false || isClimbing == false)
         {
             controller.Move(velocity * Time.deltaTime);
             velocity.y -= gravity * Time.deltaTime;
@@ -104,7 +108,6 @@ public class PlayerController : MonoBehaviour
         {
             velocity.y = -2f;
         }
-        //isGrounded = controller.isGrounded;
 
         //Move Input
         float mouseScroll = Input.GetAxis("Mouse ScrollWheel");
@@ -113,7 +116,7 @@ public class PlayerController : MonoBehaviour
 
         movement = movement.normalized;
 
-        // Player Movement
+        // Player Ground Movement
         if (mouseScroll != 0)
         {
             moveSpeed += mouseScroll * speedStep;
@@ -124,13 +127,25 @@ public class PlayerController : MonoBehaviour
         {
             Vector3 move = new Vector3(movement.x, 0, movement.z);
             controller.Move(move * moveSpeed * Time.deltaTime);
-        }
 
-        // Rotate to face direction of movement
-        if (movement != Vector3.zero)
+            if (movement != Vector3.zero)
+            {
+                Quaternion rot = Quaternion.LookRotation(movement, Vector3.up);
+                transform.rotation = rot;
+            }
+
+            wallRunTimer = 0;
+        }
+        if (isClimbing)
         {
-            Quaternion rot = Quaternion.LookRotation(movement, Vector3.up);
-            transform.rotation = rot;
+            Vector3 move = new Vector3(movement.x, movement.z, 0);
+            Vector3 targetPos = transform.position + move * moveSpeed * Time.deltaTime;
+
+            targetPos.x = Mathf.Clamp(targetPos.x, climbingBounds.min.x, climbingBounds.max.x);
+            targetPos.y = Mathf.Clamp(targetPos.y, climbingBounds.min.y, climbingBounds.max.y);
+            targetPos.z = Mathf.Clamp(targetPos.z, climbingBounds.min.z, climbingBounds.max.z);
+
+            controller.Move(targetPos - transform.position);
         }
 
         //Toggle Crouching
@@ -140,64 +155,79 @@ public class PlayerController : MonoBehaviour
         }
         if (isCrouched)
         {
+            maxSpeed = 5;
             controller.height = 1.0f;
             controller.center = new Vector3(0, 0.55f, 0);
         }
         else
         {
+            maxSpeed = 7;
             controller.height = 1.75f;
             controller.center = new Vector3(0, 0.9f, 0);
         }
 
-        //Wall Running
+        WallPhysics();
+    }
+    void WallPhysics()
+    {
         RaycastHit wallHit;
-        Debug.DrawRay(transform.position + Vector3.up * 1f, transform.forward, Color.yellow);
 
-        if (Physics.Raycast(transform.position + Vector3.up * 1f, transform.forward, out wallHit, 1.5f))
+        if (Physics.Raycast(transform.position + Vector3.up * 1f, transform.forward, out wallHit, 1f))
         {
-            if(wallHit.collider.CompareTag("Wall"))
+            if (wallHit.collider.CompareTag("Wall"))
             {
                 isNearWall = true;
-            }    
+            }
+            else
+            {
+                isNearWall = false;
+                isClimbing = false;
+                isWallRunning = false;
+            }
         }
         else
         {
             isNearWall = false;
+            isClimbing = false;
+            isWallRunning = false;
         }
-        if(Input.GetKeyDown(KeyCode.Space) && isNearWall)
+        if (isNearWall)
         {
-            StartCoroutine(WallRunCoroutine());
-        }
-
-        //Ledge Detection
-        if (isWallRunning)
-        {
-            RaycastHit ledgeHit;
-            Vector3 rayOrigin = transform.position + Vector3.up * 1.5f;
-
-            if(Physics.Raycast(rayOrigin, transform.forward, out ledgeHit, 1.0f))
+            if (Input.GetKey(KeyCode.Space) && wallRunTimer < wallRunDuration)
             {
-                if (ledgeHit.collider.CompareTag("Ledge"))
-                {
-
-                    LedgeGrabe(ledgeHit.point);
-                }
+                isWallRunning = true;
+                wallRunTimer += Time.deltaTime;
+            }
+            else
+            {
+                isWallRunning = false;
             }
         }
-        
-    }
-    void WallRunMovement()
-    {
-        Vector3 wallRunDirection = new Vector3(movement.x, 1, movement.y);
-        controller.Move(wallRunDirection * wallRunSpeed * Time.deltaTime);
-    }
-    void LedgeGrabe(Vector3 ledgePoint)
-    {
-        isWallRunning = false;
+        if (isWallRunning)
+        {
+            velocity.y = 0;
 
-        transform.position = ledgePoint;
-    }
+            Vector3 wallRunDirection = new Vector3(movement.x, 1, movement.z);
+            controller.Move(wallRunDirection * wallRunSpeed * Time.deltaTime);
+        }
+        if (isClimbing)
+        {
+            isWallRunning = false;
+            velocity.y = 0;
 
+            RaycastHit hit;
+            Vector3 rayOrigin = transform.position + Vector3.up * 1f;
+
+            if (Physics.Raycast(rayOrigin, Vector3.up * 1f, out hit, 1.5f))
+            {
+                isClimbing = false;
+                isPlayerLocked = true;
+
+                ledgePos = hit.collider.transform.position + Vector3.up * 1f;
+                StartCoroutine(MoveToLedge());
+            }
+        }
+    }
     void AnimationStates()
     {
         animCtrlr.SetBool("isCrouched", isCrouched);
@@ -295,18 +325,29 @@ public class PlayerController : MonoBehaviour
         animCtrlr.SetBool("assassin1", false);
         isAttacking = false;
     }
-    IEnumerator WallRunCoroutine()
+    IEnumerator MoveToLedge()
     {
-        isWallRunning = true;
-
-        float elapsedTime = 0f;
-
-        while(elapsedTime < wallRunDuration)
+        while(Vector3.Distance(transform.position, ledgePos) > 0.1f)
         {
-            WallRunMovement();
-            elapsedTime += Time.deltaTime;
+            transform.position = Vector3.Lerp(transform.position, ledgePos, Time.deltaTime);
             yield return null;
         }
-        isWallRunning = false;
+        transform.position = ledgePos;
+        isPlayerLocked = false;
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Climbable"))
+        {
+            climbingBounds = other.bounds;
+        }
+    }
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.CompareTag("Climbable"))
+        {
+            climbingBounds = new Bounds();
+        }
     }
 }
