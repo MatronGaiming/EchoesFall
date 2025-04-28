@@ -29,6 +29,15 @@ public class ClimbableAreas : MonoBehaviour
         {
             canClimb = false;
             GameManager.instance.playerScript.isClimbing = false;
+
+            //if(other.transform.position.y > transform.position.y + (transform.localScale.y / 2))
+            //{
+            //    Debug.Log("Player exited from the top!");
+            //    Vector3 ledgePos = transform.position;
+            //    Vector3 targetPos = new Vector3(ledgePos.x, ledgePos.y + 1f, ledgePos.z + 1f);
+
+            //    StartCoroutine(GameManager.instance.playerScript.MoveToLedge(targetPos));
+            //}
         }
     }
 }

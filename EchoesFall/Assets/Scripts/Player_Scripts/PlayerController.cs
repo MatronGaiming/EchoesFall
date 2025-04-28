@@ -23,6 +23,7 @@ public class PlayerController : MonoBehaviour
     public bool isWallRunning;
     public bool isNearWall;
     public bool isClimbing;
+    public bool isLedgeMoving;
 
     [Header("---- Player Stats ----")]
     [Header("Health")]
@@ -71,6 +72,7 @@ public class PlayerController : MonoBehaviour
         animCtrlr = GetComponent<Animator>();
 
         currentHP = maxHP;
+        gm.playerHPBar.fillAmount = currentHP / maxHP;
     }
 
     // Update is called once per frame
@@ -104,10 +106,6 @@ public class PlayerController : MonoBehaviour
             controller.Move(velocity * Time.deltaTime);
             velocity.y -= gravity * Time.deltaTime;
         }
-        else if (velocity.y < 0)
-        {
-            velocity.y = -2f;
-        }
 
         //Move Input
         float mouseScroll = Input.GetAxis("Mouse ScrollWheel");
@@ -135,9 +133,40 @@ public class PlayerController : MonoBehaviour
             }
 
             wallRunTimer = 0;
+
+            //Toggle Crouch
+            if (Input.GetKeyDown(KeyCode.C))
+            {
+                isCrouched = !isCrouched;
+            }
+            if (isCrouched)
+            {
+                maxSpeed = 5;
+                controller.height = 1.0f;
+                controller.center = new Vector3(0, 0.55f, 0);
+            }
+            else
+            {
+                maxSpeed = 7;
+                controller.height = 1.75f;
+                controller.center = new Vector3(0, 0.9f, 0);
+            }
         }
+
+        //Wall Movement
+        if (isWallRunning)
+        {
+            velocity.y = 0;
+
+            Vector3 wallRunDirection = new Vector3(movement.x, 1, movement.z);
+            controller.Move(wallRunDirection * wallRunSpeed * Time.deltaTime);
+        }
+
         if (isClimbing)
         {
+            isWallRunning = false;
+            velocity.y = 0;
+
             Vector3 move = new Vector3(movement.x, movement.z, 0);
             Vector3 targetPos = transform.position + move * moveSpeed * Time.deltaTime;
 
@@ -146,24 +175,6 @@ public class PlayerController : MonoBehaviour
             targetPos.z = Mathf.Clamp(targetPos.z, climbingBounds.min.z, climbingBounds.max.z);
 
             controller.Move(targetPos - transform.position);
-        }
-
-        //Toggle Crouching
-        if (Input.GetKeyDown(KeyCode.C))
-        {
-            isCrouched = !isCrouched;
-        }
-        if (isCrouched)
-        {
-            maxSpeed = 5;
-            controller.height = 1.0f;
-            controller.center = new Vector3(0, 0.55f, 0);
-        }
-        else
-        {
-            maxSpeed = 7;
-            controller.height = 1.75f;
-            controller.center = new Vector3(0, 0.9f, 0);
         }
 
         WallPhysics();
@@ -201,30 +212,6 @@ public class PlayerController : MonoBehaviour
             else
             {
                 isWallRunning = false;
-            }
-        }
-        if (isWallRunning)
-        {
-            velocity.y = 0;
-
-            Vector3 wallRunDirection = new Vector3(movement.x, 1, movement.z);
-            controller.Move(wallRunDirection * wallRunSpeed * Time.deltaTime);
-        }
-        if (isClimbing)
-        {
-            isWallRunning = false;
-            velocity.y = 0;
-
-            RaycastHit hit;
-            Vector3 rayOrigin = transform.position + Vector3.up * 1f;
-
-            if (Physics.Raycast(rayOrigin, Vector3.up * 1f, out hit, 1.5f))
-            {
-                isClimbing = false;
-                isPlayerLocked = true;
-
-                ledgePos = hit.collider.transform.position + Vector3.up * 1f;
-                StartCoroutine(MoveToLedge());
             }
         }
     }
@@ -284,6 +271,8 @@ public class PlayerController : MonoBehaviour
     public void TakeDamage(float damageAmount)
     {
         currentHP -= damageAmount;
+        gm.playerHPBar.fillAmount = currentHP / maxHP;
+        StartCoroutine(flashScreen());
     }
     void Healing()
     {
@@ -294,10 +283,11 @@ public class PlayerController : MonoBehaviour
                 potionCount -= 1;
                 GameManager.instance.potionText.text = potionCount.ToString();
                 currentHP = maxHP;
+                gm.playerHPBar.fillAmount = currentHP / maxHP;
             }
             else if(potionCount == 0)
             {
-                StartCoroutine(gm.playerDialogue("I need to find some pointions"));
+                StartCoroutine(gm.playerDialogue("I need to find some potions"));
             }
         }
     }
@@ -325,15 +315,36 @@ public class PlayerController : MonoBehaviour
         animCtrlr.SetBool("assassin1", false);
         isAttacking = false;
     }
-    IEnumerator MoveToLedge()
+    public IEnumerator MoveToLedge(Vector3 targetPos)
     {
-        while(Vector3.Distance(transform.position, ledgePos) > 0.1f)
+        isLedgeMoving = true;
+        controller.enabled = false;
+        velocity.y = 0;
+
+        //Move player into desired position above the ledge and forward a little bit so the player doesn't fall down.
+        float elapsedTime = 0f;
+        float moveDuration = 0.5f;
+
+        Vector3 startingPos = transform.position;
+
+        while(elapsedTime < moveDuration)
         {
-            transform.position = Vector3.Lerp(transform.position, ledgePos, Time.deltaTime);
+            transform.position = Vector3.Lerp(startingPos, targetPos, elapsedTime / moveDuration);
+            elapsedTime += Time.deltaTime;
             yield return null;
         }
-        transform.position = ledgePos;
-        isPlayerLocked = false;
+        transform.position = targetPos;
+        controller.enabled = true;
+        isLedgeMoving = false;
+
+        yield return null;
+    }
+    IEnumerator flashScreen()
+    {
+        gm.playerDamageQue.SetActive(true);
+        yield return new WaitForSeconds(0.1f);
+        gm.playerDamageQue.SetActive(false);
+
     }
 
     private void OnTriggerEnter(Collider other)

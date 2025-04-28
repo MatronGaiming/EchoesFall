@@ -10,11 +10,11 @@ public class ExitFromDungeon : MonoBehaviour
         {
             if(GameManager.instance.playerScript.isGearCollected == false)
             {
-                StartCoroutine(GameManager.instance.playerDialogue("'I need to collect my gear first!'"));
+                StartCoroutine(GameManager.instance.playerDialogue("'I need to collect my gear first! And take out my target!'"));
             }
             else
             {
-                Destroy(gameObject);
+                GameManager.instance.YouWin();
             }
         }
     }

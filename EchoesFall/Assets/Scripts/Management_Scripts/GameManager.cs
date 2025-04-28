@@ -15,23 +15,29 @@ public class GameManager : MonoBehaviour
 
     [Header("Game Progression")]
     public bool isLeaderKilled;
+    public GameObject chest;
+    public GameObject enemyLeader;
+    public GameObject levelExit;
 
     [Header("---- Assets ----")]
     [Header("Player")]
     public GameObject player;
     public PlayerController playerScript;
     public GameObject playerCam;
-    public GameObject enemyLeader;
     public GameObject[] enemies;
 
     [Header("UI")]
     public GameObject eyeVisible;
     public GameObject eyeHidden;
     public GameObject dialogueFrame;
+    public GameObject playerDamageQue;
+    public GameObject objectiveIcon;
+    public Image playerHPBar;
     public TMP_Text dialogueText;
     public TMP_Text miscTitle;
     public TMP_Text miscText;
     public TMP_Text potionText;
+    public TMP_Text objectiveText;
 
     [Header("Managers")]
     public ProgressionManager progressManager;
@@ -152,9 +158,22 @@ public class GameManager : MonoBehaviour
     //Progression
     void GameProgression()
     {
-        if(enemyLeader == null)
+        if(playerScript.isGearCollected == false)
+        {
+            objectiveText.text = "Collect your gear";
+            objectiveIcon.transform.position = chest.transform.position;
+
+        }
+        if(playerScript.isGearCollected == true)
+        {
+            objectiveText.text = "Kill your target!";
+            objectiveIcon.transform.position = new Vector3(0, 0, 0);
+        }
+        if(enemyLeader == null && playerScript.isGearCollected == true)
         {
             isLeaderKilled = true;
+            objectiveText.text = "Escape!";
+            objectiveIcon.transform.position = levelExit.transform.position;
         }
     }
 

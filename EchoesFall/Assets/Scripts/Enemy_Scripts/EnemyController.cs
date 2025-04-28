@@ -14,6 +14,9 @@ public class EnemyController : MonoBehaviour, iDamageable
     [Header("---- Components ----")]
     [SerializeField] NavMeshAgent navAgent;
     [SerializeField] Animator anim;
+    [SerializeField] Renderer model;
+
+    Color colorOrigin;
 
     [Header("----- Stats -----")]
     [Header("Health Stats")]
@@ -46,6 +49,8 @@ public class EnemyController : MonoBehaviour, iDamageable
         navAgent = GetComponent<NavMeshAgent>();
         //anim.GetComponent<Animator>();
         searchTimer = 0f;
+
+        colorOrigin = model.material.color;
     }
 
     // Update is called once per frame
@@ -181,10 +186,20 @@ public class EnemyController : MonoBehaviour, iDamageable
     public void TakeDamage(float damageAmount)
     {
         HP -= damageAmount;
+        canSeePlayer = true;
+        navAgent.SetDestination(GameManager.instance.player.transform.position);
+        
+        StartCoroutine(FlashRed());
 
         if(HP <= 0)
         {
             Destroy(gameObject);
         }
+    }
+    IEnumerator FlashRed()
+    {
+        model.material.color = Color.red;
+        yield return new WaitForSeconds(0.1f);
+        model.material.color = colorOrigin;
     }
 }
