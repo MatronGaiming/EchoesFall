@@ -149,7 +149,7 @@ public class PlayerController : MonoBehaviour
             {
                 maxSpeed = 7;
                 controller.height = 1.75f;
-                controller.center = new Vector3(0, 0.9f, 0);
+                controller.center = new Vector3(0, 0.90f, 0);
             }
         }
 
@@ -224,13 +224,13 @@ public class PlayerController : MonoBehaviour
     void Combat()
     {
         GameObject targetEnemy;
-        if (Input.GetButtonDown("Fire1") && isAttacking == false)
+        if (Input.GetButtonDown("Fire1"))
         {
             shortSwordModel.SetActive(true);
             daggerModel.SetActive(false);
 
             isCrouched = false;
-            isAttacking = true;
+            //isAttacking = true;
             
             int randomAnim = Random.Range(1, 3);
             animCtrlr.SetBool("shortSword1", randomAnim == 1);
@@ -242,14 +242,17 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        if(Input.GetKeyDown(KeyCode.F) && isAttacking == false)
+        if(Input.GetKeyDown(KeyCode.F))
         {
-            Ray ray = new Ray(transform.position, transform.forward);
+            Ray ray = new Ray(transform.position + Vector3.up * 1f, transform.forward);
             RaycastHit hit;
 
-            if (Physics.Raycast(ray, out hit, 2.0f))
+            float radius = 1.0f;
+
+            if (Physics.SphereCast(ray, radius, out hit, 2.0f))
             {
                 EnemyController enemyController = hit.collider.GetComponent<EnemyController>();
+
                 if (enemyController != null && !enemyController.canSeePlayer)
                 {
                     targetEnemy = hit.collider.gameObject;
@@ -257,7 +260,7 @@ public class PlayerController : MonoBehaviour
                     daggerModel.SetActive(true);
                     shortSwordModel.SetActive(false);
 
-                    isAttacking = true;
+                    //isAttacking = true;
 
                     animCtrlr.SetBool("assassin1", true);
 
@@ -295,25 +298,41 @@ public class PlayerController : MonoBehaviour
     //IEnumerators
     IEnumerator BladeAnimationState(int index)
     {
+        //isAttacking = true;
         shortSwordTrigger.GetComponent<ShortSwordBase>().EnableCollider();
-        yield return new WaitForSeconds(animCtrlr.GetCurrentAnimatorClipInfo(0).Length);
+        //yield return new WaitForSeconds(animCtrlr.GetCurrentAnimatorClipInfo(0).Length);
+
+        yield return new WaitUntil(() =>
+        {
+            AnimatorStateInfo stateInfo = animCtrlr.GetCurrentAnimatorStateInfo(0);
+            // normalizedTime is relative to the clip length; 1.0f signifies completion.
+            return stateInfo.normalizedTime >= 1.0f;
+        });
+
         shortSwordTrigger.GetComponent<ShortSwordBase>().DisableCollider();
+        //isAttacking = false;
 
         animCtrlr.SetBool("shortSword1", index == 1 && false);
         animCtrlr.SetBool("shortSword2", index == 2 && false);
-        isAttacking = false;
     }
     IEnumerator AssassinAnimationState(GameObject enemy)
     {
+        //isAttacking = true;
         enemy.GetComponent<EnemyController>().beingAssassinated = true;
         daggerTrigger.GetComponent<DaggerBase>().EnableCollider();
-        yield return new WaitForSeconds(animCtrlr.GetCurrentAnimatorClipInfo(0).Length);
+        //yield return new WaitForSeconds(animCtrlr.GetCurrentAnimatorClipInfo(0).Length);
+
+        yield return new WaitUntil(() =>
+        {
+            AnimatorStateInfo stateInfo = animCtrlr.GetCurrentAnimatorStateInfo(0);
+            // normalizedTime is relative to the clip length; 1.0f signifies completion.
+            return stateInfo.normalizedTime >= 1.0f;
+        });
         daggerTrigger.GetComponent<DaggerBase>().DisableCollider();
-        enemy.GetComponent<EnemyController>().beingAssassinated = false;
+        //enemy.GetComponent<EnemyController>().beingAssassinated = false;
 
-
+        //isAttacking = false;
         animCtrlr.SetBool("assassin1", false);
-        isAttacking = false;
     }
     public IEnumerator MoveToLedge(Vector3 targetPos)
     {

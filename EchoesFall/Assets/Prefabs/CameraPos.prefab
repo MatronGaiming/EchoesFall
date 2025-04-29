@@ -10,7 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1184897533}
   - component: {fileID: 1184897535}
-  - component: {fileID: 1184897534}
   m_Layer: 0
   m_Name: Camera_Minimap
   m_TagString: Untagged
@@ -52,8 +51,8 @@ Camera:
   m_FocalLength: 50
   m_NormalizedViewPortRect:
     serializedVersion: 2
-    x: 0.75
-    y: 0.1
+    x: 0.025
+    y: 0.76
     width: 0.2
     height: 0.2
   near clip plane: 0.3
@@ -64,7 +63,7 @@ Camera:
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 136
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
@@ -76,14 +75,6 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
---- !u!81 &1184897534
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1184897532}
-  m_Enabled: 1
 --- !u!1 &3519868311336682367
 GameObject:
   m_ObjectHideFlags: 0
@@ -148,7 +139,7 @@ Camera:
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 127
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0

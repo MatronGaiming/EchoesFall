@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.UI;
 
 public class EnemyController : MonoBehaviour, iDamageable
 {
@@ -15,18 +16,22 @@ public class EnemyController : MonoBehaviour, iDamageable
     [SerializeField] NavMeshAgent navAgent;
     [SerializeField] Animator anim;
     [SerializeField] Renderer model;
+    [SerializeField] GameObject hpFrame;
+    [SerializeField] Image hpImage;
 
     Color colorOrigin;
 
     [Header("----- Stats -----")]
     [Header("Health Stats")]
-    [SerializeField] public float HP;
+    [SerializeField] public float maxHP;
+    [SerializeField] public float currentHP;
 
     [Header("Attack Stats")]
     [SerializeField] float attackRange;
     [SerializeField] float attackCooldown;
     [SerializeField] float distanceToPlayer;
     [SerializeField] GameObject weaponTrigger;
+    [SerializeField] float nextAttackTime;
 
     float lastAttackTime;
 
@@ -47,10 +52,13 @@ public class EnemyController : MonoBehaviour, iDamageable
     void Start()
     {
         navAgent = GetComponent<NavMeshAgent>();
-        //anim.GetComponent<Animator>();
+        anim.GetComponent<Animator>();
         searchTimer = 0f;
 
         colorOrigin = model.material.color;
+
+        currentHP = maxHP;
+        hpImage.fillAmount = currentHP / maxHP;
     }
 
     // Update is called once per frame
@@ -82,7 +90,7 @@ public class EnemyController : MonoBehaviour, iDamageable
                     FollowPlayer();
                     distanceToPlayer = Vector3.Distance(transform.position, GameManager.instance.player.transform.position);
 
-                    if (distanceToPlayer <= attackRange)
+                    if (distanceToPlayer <= attackRange && nextAttackTime <= 0)
                     {
                         StartCoroutine(EnemyAttackState());
                     }
@@ -111,8 +119,11 @@ public class EnemyController : MonoBehaviour, iDamageable
         {
             transform.rotation = GameManager.instance.player.transform.rotation;
 
-            Vector3 offset = GameManager.instance.player.transform.forward * 1.5f;
+            Vector3 offset = GameManager.instance.player.transform.forward * 1.25f;
             transform.position = GameManager.instance.player.transform.position + offset;
+
+            anim.SetBool("BeingAssassinated", true);
+            StartCoroutine(BeingAssassinated());
         }
     }
     private void OnTriggerEnter(Collider other)
@@ -176,22 +187,32 @@ public class EnemyController : MonoBehaviour, iDamageable
         anim.SetBool("Attack1", true);
 
         weaponTrigger.GetComponent<EnemySwordBase>().EnableCollider();
-        yield return new WaitForSeconds(anim.GetCurrentAnimatorClipInfo(0).Length);
+        //yield return new WaitForSeconds(anim.GetCurrentAnimatorClipInfo(0).Length);
+        yield return new WaitUntil(() =>
+        {
+            AnimatorStateInfo stateInfo = anim.GetCurrentAnimatorStateInfo(0);
+            // normalizedTime is relative to the clip length; 1.0f signifies completion.
+            return stateInfo.normalizedTime >= 1.0f;
+        });
         weaponTrigger.GetComponent<EnemySwordBase>().DisableCollider();
 
         anim.SetBool("Attack1", false);
+
+        float randomAttackDelay = Random.Range(1.0f, 10.0f);
+        nextAttackTime -= Time.deltaTime;
     }
 
     //Stat Tracking
     public void TakeDamage(float damageAmount)
     {
-        HP -= damageAmount;
+        currentHP -= damageAmount;
         canSeePlayer = true;
         navAgent.SetDestination(GameManager.instance.player.transform.position);
-        
+        hpImage.fillAmount = currentHP / maxHP;
+
         StartCoroutine(FlashRed());
 
-        if(HP <= 0)
+        if(currentHP <= 0)
         {
             Destroy(gameObject);
         }
@@ -201,5 +222,12 @@ public class EnemyController : MonoBehaviour, iDamageable
         model.material.color = Color.red;
         yield return new WaitForSeconds(0.1f);
         model.material.color = colorOrigin;
+    }
+    IEnumerator BeingAssassinated()
+    {
+
+        yield return new WaitForSeconds(anim.GetCurrentAnimatorStateInfo(0).length);
+
+        Destroy(gameObject);
     }
 }

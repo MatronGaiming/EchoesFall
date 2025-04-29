@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class DaggerBase : MonoBehaviour
 {
-    public float damage;
+    public float damage = 100;
     public Collider daggerCollider;
 
     // Start is called before the first frame update
@@ -34,8 +34,6 @@ public class DaggerBase : MonoBehaviour
         }
         if (other.CompareTag("Enemy"))
         {
-            damage = other.GetComponent<EnemyController>().HP;
-
             iDamageable damageable = other.GetComponent<iDamageable>();
             if (damageable != null)
             {
