@@ -8,12 +8,7 @@ public class StalkingZoneTutorial : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
-            GameManager.instance.statePause();
-            GameManager.instance.menuActive = GameManager.instance.menuMisc;
-            GameManager.instance.miscTitle.text = "Stalking Zones";
-            GameManager.instance.miscText.text = "You can hide in stalking zones as long as you are crouched, they can be used to break the line of sight of your enemy for a time.";
-            GameManager.instance.menuActive.SetActive(true);
-
+            GameManager.instance.stalkingZoneTutorialStarted = true;
             GameObject.Destroy(gameObject);
         }
     }

@@ -24,8 +24,8 @@ public class ButtonFunctions : MonoBehaviour
     }
     public void beginPlay()
     {
-        GameManager.instance.gameStart = false;
-        //SceneManager.LoadScene(SceneManager.GetActiveScene().name);
-        GameManager.instance.stateUnpause();
+        //GameManager.instance.gameStart = false;
+        SceneManager.LoadScene("SceneManager");
+        //GameManager.instance.stateUnpause();
     }
 }

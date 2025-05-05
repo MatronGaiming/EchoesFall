@@ -18,6 +18,7 @@ public class EnemyController : MonoBehaviour, iDamageable
     [SerializeField] Renderer model;
     [SerializeField] GameObject hpFrame;
     [SerializeField] Image hpImage;
+    [SerializeField] public GameObject assassinationImage;
 
     Color colorOrigin;
 
@@ -162,7 +163,7 @@ public class EnemyController : MonoBehaviour, iDamageable
     //Code for following the player after spotting the player.
     void FollowPlayer()
     {
-        navAgent.stoppingDistance = 2;
+        navAgent.stoppingDistance = 2.5f;
         navAgent.speed = 3.5f;
 
         navAgent.SetDestination(GameManager.instance.player.transform.position);

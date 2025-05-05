@@ -14,7 +14,6 @@ public class GameManager : MonoBehaviour
     public bool gameStart;
 
     [Header("Game Progression")]
-    public bool isLeaderKilled;
     public GameObject chest;
     public GameObject enemyLeader;
     public GameObject levelExit;
@@ -27,6 +26,7 @@ public class GameManager : MonoBehaviour
     public GameObject[] enemies;
 
     [Header("UI")]
+    public GameObject loadScreen;
     public GameObject eyeVisible;
     public GameObject eyeHidden;
     public GameObject dialogueFrame;
@@ -37,10 +37,18 @@ public class GameManager : MonoBehaviour
     public TMP_Text miscTitle;
     public TMP_Text miscText;
     public TMP_Text potionText;
+    public TMP_Text lockpickText;
     public TMP_Text objectiveText;
 
-    [Header("Managers")]
-    public ProgressionManager progressManager;
+    [Header("---- Scene Management ----")]
+    [Header("Cave Scene")]
+    Vector3 playerSpawn;
+    public GameObject caveScene;
+    Cave_PrisonTransition _caveScene;
+    public Transform cavePlayerSpawn;
+    [Header("Prison Scene")]
+    public GameObject prisonScene;
+    public Transform prisonPlayerSpawn;
 
     [Header("---- Floats/Ints ----")]
     float timeScaleOrig;
@@ -53,6 +61,19 @@ public class GameManager : MonoBehaviour
     [SerializeField] public GameObject menuStart;
     [SerializeField] public GameObject menuMisc;
 
+    [Header("---- Quests ----")]
+    [Header("Tutorial")]
+    public bool gameHasStarted;
+    public bool combatTutorialStarted;
+    public bool assassinationTutorialStarted;
+    public bool stalkingZoneTutorialStarted;
+    public bool climbingAreaTutorialStarted;
+    public bool pickpocetTutorialStarted;
+    public bool isKeyCollected;
+    public int enemyCount;
+    [Header("Main Quest")]
+    public bool isLeaderKilled;
+
     // Start is called before the first frame update
     void Awake()
     {
@@ -61,17 +82,13 @@ public class GameManager : MonoBehaviour
         player = GameObject.Find("Player");
         playerScript = player.GetComponent<PlayerController>();
         playerCam = GameObject.Find("CameraPos");
-        progressManager = GetComponent<ProgressionManager>();
+        _caveScene = caveScene.GetComponent<Cave_PrisonTransition>();
+        playerScript.controller.enabled = false;
+        player.transform.position = cavePlayerSpawn.transform.position;
+        playerScript.controller.enabled = true;
 
         statePause();
-        menuActive = menuMisc;
-        miscTitle.text = "Game Start";
-        miscText.text = "You've recently been captured on a mission gone wrong. Luckily you've unlocked your cell and can escape to finish your job. Collect your gear and assassinate your target!\n"
-            +"\n" 
-            + "Controls: WSAD to move around. C will allow you to crouch. Moving the scrollwheel will increase/decrease your move speed";
-        menuActive.SetActive(true);
-
-
+        gameHasStarted = true;
     }
 
     // Update is called once per frame
@@ -158,23 +175,54 @@ public class GameManager : MonoBehaviour
     //Progression
     void GameProgression()
     {
-        if(playerScript.isGearCollected == false)
-        {
-            objectiveText.text = "Collect your gear";
-            objectiveIcon.transform.position = chest.transform.position;
+        objectiveIcon.SetActive(false);
 
-        }
-        if(playerScript.isGearCollected == true)
+        //Tutorials
+        if(gameHasStarted == true)
         {
-            objectiveText.text = "Kill your target!";
-            objectiveIcon.transform.position = new Vector3(0, 0, 0);
+            menuActive = menuMisc;
+            miscTitle.text = "Story So Far";
+            miscText.text = "You've are an elite assassin who has been assigned to take out the Watch Commander! Ruthless and cunning, he uses the law to abuse those he believes lesser than himself.\n"
+                + "\n"
+                + "---- Controls ----"
+                +"\n"
+                + "Use WSAD to move around. Moving the scrollwheel will increase/decrease your move speed.\n"
+                + "C will allow you to crouch.";
+            menuActive.SetActive(true);
+            gameHasStarted = false;
         }
-        if(enemyLeader == null && playerScript.isGearCollected == true)
+        if(gameHasStarted == false && stalkingZoneTutorialStarted == true)
         {
-            isLeaderKilled = true;
-            objectiveText.text = "Escape!";
-            objectiveIcon.transform.position = levelExit.transform.position;
+            statePause();
+            menuActive = menuMisc;
+            miscTitle.text = "Stalking Zones";
+            miscText.text = "You can hide in stalking zones as long as you are crouched, they can be used to break the line of sight of your enemy for a time.";
+            menuActive.SetActive(true);
+            stalkingZoneTutorialStarted = false;
         }
+        if(gameHasStarted == false && climbingAreaTutorialStarted == true)
+        {
+            statePause();
+            menuActive = menuMisc;
+            miscTitle.text = "Climbing";
+            miscText.text = "You can run up walls by pressing the SPACEBAR." 
+                + "  In some areas of the wall where it's broken you can press the SPACEBAR again to climb.";
+            menuActive.SetActive(true);
+            climbingAreaTutorialStarted = false;
+        }
+        if(gameHasStarted == false && combatTutorialStarted == true)
+        {
+            statePause();
+            menuActive = menuMisc;
+            miscTitle.text = "Combat";
+            miscText.text = "\n"
+                + "You can fight back with your shortword by pressing the Left Mouse Button."
+                + "\n"
+                + "Since you are an assassin, you can Press F on unaware enemies to take them down quietly.";
+            menuActive.SetActive(true);
+            combatTutorialStarted = false;
+        }
+        //Objectives
     }
 
     //Player Dialogue
@@ -182,8 +230,28 @@ public class GameManager : MonoBehaviour
     {
         dialogueFrame.SetActive(true);
         dialogueText.text = text;
-        yield return new WaitForSeconds(1.5f);
+        yield return new WaitForSeconds(2f);
         dialogueFrame.SetActive(false);
         dialogueText.text = "-----";
+    }
+
+    //Scene Management
+    public IEnumerator SwitchToPrison()
+    {
+        
+        loadScreen.SetActive(true);
+        yield return new WaitForSeconds(1.5f);
+        playerScript.isPlayerLocked = true;
+        playerScript.controller.enabled = false;
+
+        caveScene.SetActive(false);
+        prisonScene.SetActive(true);
+        player.transform.position = prisonPlayerSpawn.position;
+        playerScript.controller.enabled = true;
+
+        //yield return new WaitForSeconds(1.5f);
+        playerScript.isPlayerLocked = false;
+        loadScreen.SetActive(false);
+               
     }
 }

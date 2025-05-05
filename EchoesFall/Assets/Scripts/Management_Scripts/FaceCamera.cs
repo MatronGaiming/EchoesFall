@@ -13,11 +13,6 @@ public class FaceCamera : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Vector3 cameraPos = Camera.main.transform.position;
-
-        Vector3 direction = cameraPos - transform.position;
-        direction.y = 0;
-
-        transform.rotation = Quaternion.LookRotation(direction);
+       transform.LookAt(transform.position + Camera.main.transform.forward);
     }
 }

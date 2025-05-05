@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
+using static UnityEngine.GraphicsBuffer;
 
 public class PlayerController : MonoBehaviour
 {
@@ -24,25 +25,25 @@ public class PlayerController : MonoBehaviour
     public bool isNearWall;
     public bool isClimbing;
     public bool isLedgeMoving;
+    [Header("Assassination")]
+    public bool enemyInRange;
+    [Header("Progression Objects")]
+    public bool hasPrisonKey;
 
     [Header("---- Player Stats ----")]
     [Header("Health")]
     [SerializeField] public float maxHP = 100;
     [SerializeField] float currentHP;
-    [SerializeField] public int potionCount;
+    public int potionCount;
+    public int lockpickCount;
 
     [Header("---- Movement ----")]
     [SerializeField] float moveSpeed;
     [SerializeField] float minSpeed;
     [SerializeField] float maxSpeed;
     [SerializeField] float speedStep;
-    [SerializeField] float jumpSpeed;
+    [SerializeField] float rotationSpeed;
     private Vector3 movement;
-
-    [Header("---- Ground Check ----")]
-    [SerializeField] Transform groundCheck;
-    [SerializeField] float groundDistance = 0.2f;
-    [SerializeField] LayerMask groundMask;
 
     [Header("---- Jumping/Physics ----")]
     [SerializeField] float gravity;
@@ -54,25 +55,33 @@ public class PlayerController : MonoBehaviour
     [SerializeField] float wallRunDuration;
     [SerializeField] float wallRunSpeed;
     private Bounds climbingBounds;
+    public GameObject currentClimbableObject;
     private Vector3 ledgePos;
 
     [Header("---- Components ----")]
-    [SerializeField] CharacterController controller;
+    [SerializeField] public CharacterController controller;
+    [SerializeField] CapsuleCollider capsuleCollider;
     [SerializeField] Animator animCtrlr;
     [SerializeField] GameObject shortSwordTrigger;
     [SerializeField] GameObject daggerTrigger;
     [SerializeField] GameObject shortSwordModel;
     [SerializeField] GameObject daggerModel;
+    [SerializeField] Transform target;
+    [SerializeField] LayerMask enemyLayer;
+    [SerializeField] Collider[] colliders;
 
     // Start is called before the first frame update
     void Start()
     {
         gm = GameManager.instance;
         controller = GetComponent<CharacterController>();
-        animCtrlr = GetComponent<Animator>();
+        //animCtrlr = GetComponent<Animator>();
 
         currentHP = maxHP;
         gm.playerHPBar.fillAmount = currentHP / maxHP;
+        GameManager.instance.lockpickText.text = lockpickCount.ToString();
+        GameManager.instance.potionText.text = potionCount.ToString();
+
     }
 
     // Update is called once per frame
@@ -81,10 +90,7 @@ public class PlayerController : MonoBehaviour
         if(isPlayerLocked == false)
         {
             Movement();
-            if (isGearCollected == true)
-            {
-                Combat();
-            }
+            Combat();           
             AnimationStates();
             Healing();
         }
@@ -99,7 +105,12 @@ public class PlayerController : MonoBehaviour
     private void Movement()
     {
         //Detect Ground
-        isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
+        RaycastHit hit;
+        Vector3 startPoint = transform.position + Vector3.up * controller.radius;
+        Vector3 endPoint = transform.position + Vector3.up * controller.height;
+        Vector3 direction = Vector3.down;
+
+        isGrounded = Physics.CapsuleCast(startPoint, endPoint, controller.radius, direction, out hit, 0.2f);
 
         if (isGrounded == false || isWallRunning == false || isClimbing == false)
         {
@@ -157,6 +168,7 @@ public class PlayerController : MonoBehaviour
         if (isWallRunning)
         {
             velocity.y = 0;
+            wallRunTimer += Time.deltaTime;
 
             Vector3 wallRunDirection = new Vector3(movement.x, 1, movement.z);
             controller.Move(wallRunDirection * wallRunSpeed * Time.deltaTime);
@@ -167,7 +179,10 @@ public class PlayerController : MonoBehaviour
             isWallRunning = false;
             velocity.y = 0;
 
-            Vector3 move = new Vector3(movement.x, movement.z, 0);
+            Transform climbTransform = currentClimbableObject.transform;
+
+            //Vector3 move = new Vector3(movement.x, movement.z, 0);
+            Vector3 move = movement.x * climbTransform.right + movement.z * climbTransform.up;
             Vector3 targetPos = transform.position + move * moveSpeed * Time.deltaTime;
 
             targetPos.x = Mathf.Clamp(targetPos.x, climbingBounds.min.x, climbingBounds.max.x);
@@ -179,6 +194,7 @@ public class PlayerController : MonoBehaviour
 
         WallPhysics();
     }
+
     void WallPhysics()
     {
         RaycastHit wallHit;
@@ -206,12 +222,13 @@ public class PlayerController : MonoBehaviour
         {
             if (Input.GetKey(KeyCode.Space) && wallRunTimer < wallRunDuration)
             {
+                //rb.useGravity = false;
                 isWallRunning = true;
-                wallRunTimer += Time.deltaTime;
             }
             else
             {
                 isWallRunning = false;
+                //rb.useGravity = true;
             }
         }
     }
@@ -223,7 +240,54 @@ public class PlayerController : MonoBehaviour
     // Combat Functions
     void Combat()
     {
-        GameObject targetEnemy;
+        //GameObject targetEnemy;
+
+        //Ray ray = new Ray(transform.position + Vector3.up * 1f, transform.forward);
+        //RaycastHit hit;
+
+        //float radius = 1.0f;
+        //Gizmos.color = Color.green;
+        //Vector3 origin = transform.position + Vector3.up * 1f;
+        //Vector3 direction = transform.forward;
+        //float maxDistance = 2f;
+
+        //if (Physics.SphereCast(origin, radius, direction, out hit, maxDistance))
+        //{
+        //    EnemyController enemyController = hit.collider.GetComponent<EnemyController>();
+
+        //    if(enemyController != null && enemyController.angleToPlayer >= 100)
+        //    {
+        //        enemyInRange = true;
+        //        enemyController.assassinationImage.SetActive(true);
+        //    }
+        //    else
+        //    {
+        //        enemyInRange = false;
+        //        //enemyController.assassinationImage.SetActive(false);
+        //        enemyController = null;
+        //    }
+        //    //enemyInRange = true;
+        //}
+        //else
+        //{
+        //    enemyInRange = false;
+        //}
+        Transform target = GetNearestTarget();
+
+        if (target != null)
+        {
+            enemyInRange = true;
+            EnemyController enemyController = target.GetComponent<EnemyController>();
+            if (enemyController != null && enemyController.angleToPlayer >= 100)
+            {
+                enemyController.assassinationImage.SetActive(true);
+            }
+        }
+        else
+        {
+            enemyInRange = false;
+        }
+
         if (Input.GetButtonDown("Fire1"))
         {
             shortSwordModel.SetActive(true);
@@ -231,7 +295,13 @@ public class PlayerController : MonoBehaviour
 
             isCrouched = false;
             //isAttacking = true;
-            
+            if (target != null)
+            {
+                Vector3 direction = (target.position - transform.position).normalized;
+                Quaternion targetRotation = Quaternion.LookRotation(direction);
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+            }
+
             int randomAnim = Random.Range(1, 3);
             animCtrlr.SetBool("shortSword1", randomAnim == 1);
             animCtrlr.SetBool("shortSword2", randomAnim == 2);
@@ -242,32 +312,57 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        if(Input.GetKeyDown(KeyCode.F))
-        {
-            Ray ray = new Ray(transform.position + Vector3.up * 1f, transform.forward);
-            RaycastHit hit;
-
-            float radius = 1.0f;
-
-            if (Physics.SphereCast(ray, radius, out hit, 2.0f))
+        if(Input.GetKeyDown(KeyCode.F) && enemyInRange == true)
+        {           
+            if (enemyInRange == true)
             {
-                EnemyController enemyController = hit.collider.GetComponent<EnemyController>();
+                GameObject targetEnemy = target.gameObject;
 
-                if (enemyController != null && !enemyController.canSeePlayer)
+                daggerModel.SetActive(true);
+                shortSwordModel.SetActive(false);
+
+                //isAttacking = true;
+
+                animCtrlr.SetBool("assassin1", true);
+
+                StartCoroutine(AssassinAnimationState(targetEnemy));
+            }           
+        }
+    }
+
+    Transform GetNearestTarget()
+    {
+        Vector3 detectionOrigin = transform.position + Vector3.up;
+        float detectionRadius = 2.5f;
+        colliders = Physics.OverlapSphere(detectionOrigin, detectionRadius, enemyLayer);
+
+        Transform bestTarget = null;
+        float closestDistance = Mathf.Infinity;
+
+        foreach(Collider col in colliders)
+        {
+            if(!(col is CapsuleCollider))
+            {
+                continue;
+            }
+            EnemyController enemy = col.GetComponent<EnemyController>();
+            if(enemy != null)
+            {
+                Vector3 directionToEnemy = enemy.transform.position - transform.position;
+                float angle = Vector3.Angle(transform.forward, directionToEnemy);
+
+                if(angle <= 45f)
                 {
-                    targetEnemy = hit.collider.gameObject;
-
-                    daggerModel.SetActive(true);
-                    shortSwordModel.SetActive(false);
-
-                    //isAttacking = true;
-
-                    animCtrlr.SetBool("assassin1", true);
-
-                    StartCoroutine(AssassinAnimationState(targetEnemy));
+                    float distance = directionToEnemy.magnitude;
+                    if(distance < closestDistance)
+                    {
+                        closestDistance = distance;
+                        bestTarget = enemy.transform;
+                    }
                 }
             }
         }
+        return bestTarget;
     }
 
     // Health and Damage Tracking
@@ -319,6 +414,13 @@ public class PlayerController : MonoBehaviour
     {
         //isAttacking = true;
         enemy.GetComponent<EnemyController>().beingAssassinated = true;
+        if (target != null)
+        {
+            // Calculate the direction and smoothly rotate
+            Vector3 direction = (target.position - transform.position).normalized;
+            Quaternion targetRotation = Quaternion.LookRotation(direction);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+        }
         daggerTrigger.GetComponent<DaggerBase>().EnableCollider();
         //yield return new WaitForSeconds(animCtrlr.GetCurrentAnimatorClipInfo(0).Length);
 
